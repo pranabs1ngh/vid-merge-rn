@@ -26,14 +26,20 @@ export default class HomeScreen extends Component {
         this.setState({ dir: result, selected: [] })
         return Promise.all([RNFS.stat(result[0].path), result[0].path]);
       })
-      .catch(console.log);
+      .catch(console.log)
   }
 
   deleteCacheFiles = () => {
-    for (let i = 1; i < 6; i++)
-      RNFS.unlink(`${RNFS.DocumentDirectoryPath}/out${i}.jpeg`)
-
-    this.loadFiles()
+    RNFS.readDir(RNFS.DocumentDirectoryPath)
+      .then(result => {
+        result.forEach(item => {
+          if (item.path.endsWith('.jpeg'))
+            RNFS.unlink(item.path)
+        })
+        this.loadFiles()
+        return Promise.all([RNFS.stat(result[0].path), result[0].path]);
+      })
+      .catch(console.log)
   }
 
   mergeVideos = async () => {
@@ -41,14 +47,14 @@ export default class HomeScreen extends Component {
     if (this.state.selected[0].endsWith('.mp4') && this.state.selected[1].endsWith('mp4')) {
       try {
         RNFFmpeg.resetStatistics();
-        // 1. EXTRACT FIRST 5 FRAMES
-        await RNFFmpeg.execute(`-i ${this.state.selected[1]} -vframes 5 ${RNFS.DocumentDirectoryPath}/out%01d.jpeg`)
 
-        // 2. ENCODE A VIDEO FROM THOSE 5 FRAMES
+        // 1. EXTRACT ALL FRAMES FROM 1ST VIDEO & FIRST 5 FRAMES FROM 2ND VIDEO
+        await RNFFmpeg.execute(`-i ${this.state.selected[0]} ${RNFS.DocumentDirectoryPath}/out%05d.jpeg`)
+        await RNFFmpeg.execute(`-i ${this.state.selected[1]} -vframes 5 ${RNFS.DocumentDirectoryPath}/out%05d.jpeg`)
+
+        // 2. ENCODE A VIDEO FROM THOSE FRAMES
         await RNFFmpeg
-          .execute(`-framerate 1/5 -i ${RNFS.DocumentDirectoryPath}/out%01d.jpeg -c:v mpeg4 -r 3 -pix_fmt yuv420p ${RNFS.DocumentDirectoryPath}/FRAMES.mp4`)
-
-        // 3. CONCAT 1ST AND FRAME's VIDEO
+          .execute(`-i ${RNFS.DocumentDirectoryPath}/out%05d.jpeg -c:v mpeg4 -r 24 ${RNFS.DocumentDirectoryPath}/OUTPUT${today.getTime()}.mp4`)
 
         // 4. DELETE ALL EXTRA FILES CREATED IN THE PROCESS
         this.deleteCacheFiles()
