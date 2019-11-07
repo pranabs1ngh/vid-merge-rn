@@ -122,6 +122,13 @@ def enableHermes = project.ext.react.get("enableHermes", false);
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
+    packagingOptions {
+        pickFirst 'lib/x86/libc++_shared.so'
+        pickFirst 'lib/x86_64/libc++_shared.so'
+        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+        pickFirst 'lib/arm64-v8a/libc++_shared.so'
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -129,7 +136,7 @@ android {
 
     defaultConfig {
         applicationId "com.vid_merge"
-        minSdkVersion rootProject.ext.minSdkVersion
+        minSdkVersion 24
         missingDimensionStrategy 'react-native-camera', 'general'
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -180,10 +187,12 @@ android {
 }
 
 dependencies {
+    implementation project(':react-native-camera')
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "com.facebook.react:react-native:+"  // From node_modules
-    compile project(':react-native-fs')
-    compile project(':react-native-video')
+    api project(':react-native-fs')
+    api project(':react-native-camera')
+    api project(':react-native-video')
     implementation "androidx.appcompat:appcompat:1.0.0"
     if (enableHermes) {
         def hermesPath = "../../node_modules/hermes-engine/android/";
