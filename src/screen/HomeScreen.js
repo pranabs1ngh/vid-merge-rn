@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { StyleSheet, View, TouchableHighlight } from 'react-native'
 import RNFS from 'react-native-fs'
-
+import { LogLevel, RNFFmpeg } from 'react-native-ffmpeg'
 import Entypo from 'react-native-vector-icons/Entypo'
 import { ListItem, CheckBox } from 'react-native-elements'
 
@@ -23,14 +23,37 @@ export default class HomeScreen extends Component {
     RNFS.readDir(RNFS.DocumentDirectoryPath)
       .then(result => {
         result = result.map(item => ({ ...item, isSelected: false }))
-        this.setState({ dir: result })
+        this.setState({ dir: result, selected: [] })
         return Promise.all([RNFS.stat(result[0].path), result[0].path]);
       })
       .catch(console.log);
   }
 
-  mergeVideos = () => {
-    console.log('Merge Videos')
+  deleteCacheFiles = () => {
+    for (let i = 1; i < 6; i++)
+      RNFS.unlink(`${RNFS.DocumentDirectoryPath}/out${i}.jpeg`)
+
+    this.loadFiles()
+  }
+
+  mergeVideos = async () => {
+    const today = new Date();
+    if (this.state.selected[0].endsWith('.mp4') && this.state.selected[1].endsWith('mp4')) {
+      try {
+        RNFFmpeg.resetStatistics();
+        // 1. EXTRACT FIRST 5 FRAMES
+        await RNFFmpeg.execute(`-i ${this.state.selected[1]} -vframes 5 ${RNFS.DocumentDirectoryPath}/out%01d.jpeg`)
+
+        // 2. ENCODE A VIDEO FROM THOSE 5 FRAMES
+        await RNFFmpeg
+          .execute(`-framerate 1/5 -i ${RNFS.DocumentDirectoryPath}/out%01d.jpeg -c:v mpeg4 -r 3 -pix_fmt yuv420p ${RNFS.DocumentDirectoryPath}/FRAMES.mp4`)
+
+        // 3. CONCAT 1ST AND FRAME's VIDEO
+
+        // 4. DELETE ALL EXTRA FILES CREATED IN THE PROCESS
+        this.deleteCacheFiles()
+      } catch (err) { console.log(err) }
+    }
   }
 
   mergeAudio = () => {
@@ -51,39 +74,41 @@ export default class HomeScreen extends Component {
         <Header navigation={this.props.navigation} />
         <View style={styles.container}>
           {this.state.dir.map((item, index) => {
-            if (item.name.endsWith('.mp4')) return <TouchableHighlight
-              key={index}
-              onPress={() => {
-                this.props.navigation.navigate('Video', { path: item.path })
-              }}
-            >
-              <ListItem
-                leftIcon={<Entypo
-                  name='video'
-                  size={30}
-                  style={{ textAlign: 'center' }}
-                />}
-                title={item.name}
-                subtitle={String((item.size / 1024 / 1024).toFixed(2)) + ' MB'}
-                rightElement={<CheckBox
-                  checked={item.isSelected}
-                  onPress={() => this.setState(({ dir, selected }) => {
-                    if (item.isSelected) {
-                      const i = selected.findIndex(path => path === item.path)
-                      selected.splice(i, 1)
-                      dir[index].isSelected = false
-                      return { dir, selected }
-                    }
-                    else {
-                      selected.push(item.path)
-                      dir[index] = { ...item, isSelected: true }
-                      return { dir, selected }
-                    }
-                  })}
-                />}
-                bottomDivider
-              />
-            </TouchableHighlight>
+            if (item.name.endsWith('.mp4') || item.name.endsWith('.jpeg'))
+              return <TouchableHighlight
+                key={index}
+                onPress={() => {
+                  item.name.endsWith('.mp4') &&
+                    this.props.navigation.navigate('Video', { path: item.path })
+                }}
+              >
+                <ListItem
+                  leftIcon={<Entypo
+                    name='video'
+                    size={30}
+                    style={{ textAlign: 'center' }}
+                  />}
+                  title={item.name}
+                  subtitle={String((item.size / 1024 / 1024).toFixed(2)) + ' MB'}
+                  rightElement={<CheckBox
+                    checked={item.isSelected}
+                    onPress={() => this.setState(({ dir, selected }) => {
+                      if (item.isSelected) {
+                        const i = selected.findIndex(path => path === item.path)
+                        selected.splice(i, 1)
+                        dir[index].isSelected = false
+                        return { dir, selected }
+                      }
+                      else {
+                        selected.push(item.path)
+                        dir[index] = { ...item, isSelected: true }
+                        return { dir, selected }
+                      }
+                    })}
+                  />}
+                  bottomDivider
+                />
+              </TouchableHighlight>
           })}
         </View>
         <Footer
