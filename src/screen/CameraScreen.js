@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { StyleSheet, View, TouchableOpacity } from 'react-native'
 import { RNCamera } from 'react-native-camera'
+import RNFS from 'react-native-fs'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 import Entypo from 'react-native-vector-icons/Entypo'
 
@@ -23,9 +24,20 @@ export default class CameraScreen extends Component {
   startRecording = async () => {
     if (this.camera) {
       this.setState({ recording: true });
+      const today = new Date();
+      const fileName = 'VID' + today.getTime() + '.mp4'
       const { uri, codec = "mp4" } = await this.camera.recordAsync();
-
+      RNFS.copyFile(uri, RNFS.DocumentDirectoryPath + '/' + fileName).then(() => {
+        console.log('File copied locally.')
+      }), err => {
+        console.log(err)
+      }
     }
+  }
+
+  stopRecording = () => {
+    this.setState({ recording: false });
+    this.camera.stopRecording();
   }
 
   render = () => {
@@ -40,7 +52,7 @@ export default class CameraScreen extends Component {
     if (this.state.recording) button = (
       <TouchableOpacity
         activeOpacity={0.8}
-        onPress={this.camera.stopRecording}
+        onPress={this.stopRecording}
         style={styles.stopRecording}
       >
         <View style={styles.stopIco}></View>
@@ -135,9 +147,10 @@ const styles = StyleSheet.create({
     alignContent: 'center'
   },
   stopIco: {
-    height: 45,
-    width: 45,
-    borderRadius: 20,
-    backgroundColor: '#FF5722'
+    height: 35,
+    width: 35,
+    borderRadius: 10,
+    backgroundColor: '#FF5722',
+    alignSelf: 'center'
   }
 });
