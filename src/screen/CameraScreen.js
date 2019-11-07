@@ -27,7 +27,7 @@ export default class CameraScreen extends Component {
       const today = new Date();
       const fileName = 'VID' + today.getTime() + '.mp4'
       const { uri, codec = "mp4" } = await this.camera.recordAsync();
-      RNFS.copyFile(uri, RNFS.DocumentDirectoryPath + '/' + fileName).then(() => {
+      RNFS.moveFile(uri, RNFS.DocumentDirectoryPath + '/' + fileName).then(() => {
         console.log('File copied locally.')
       }), err => {
         console.log(err)

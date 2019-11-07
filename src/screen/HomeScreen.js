@@ -9,6 +9,7 @@ export default class HomeScreen extends Component {
   constructor(props) {
     super(props)
     this.state = {}
+    this.loadFiles()
     this.focusListener = this.props.navigation.addListener('didFocus', () => this.loadFiles())
   }
 
@@ -16,7 +17,6 @@ export default class HomeScreen extends Component {
     RNFS.readDir(RNFS.DocumentDirectoryPath)
       .then((result) => {
         this.setState({ dir: result })
-        // stat the first file
         return Promise.all([RNFS.stat(result[0].path), result[0].path]);
       })
       .catch((err) => {
@@ -31,7 +31,9 @@ export default class HomeScreen extends Component {
         {this.state.dir && this.state.dir.map((item, index) => {
           if (item.name.endsWith('.mp4')) return <TouchableHighlight
             key={index}
-          >
+            onPress={() => {
+              this.props.navigation.navigate('Video', { path: item.path })
+            }}>
             <ListItem
               leftIcon={<Entypo
                 name='video'
