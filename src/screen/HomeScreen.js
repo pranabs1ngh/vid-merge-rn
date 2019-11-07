@@ -1,13 +1,23 @@
 import React from 'react'
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native'
-import Ionicons from 'react-native-vector-icons/Ionicons'
+import { StyleSheet, View } from 'react-native'
+import RNFS from 'react-native-fs'
+import Header from '../components/header'
 
 const HomeScreen = props => {
+  RNFS.readDir(RNFS.DocumentDirectoryPath)
+    .then((result) => {
+      console.log('GOT RESULT', result);
+
+      // stat the first file
+      return Promise.all([RNFS.stat(result[0].path), result[0].path]);
+    })
+    .catch((err) => {
+      console.log(err.message);
+    });
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => props.navigation.navigate('Camera')}>
-        <Ionicons name='ios-camera' style={styles.buttonTxt} />
-      </TouchableOpacity>
+      <Header navigation={props.navigation} />
     </View>
   )
 }
@@ -16,11 +26,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  buttonTxt: {
-    fontSize: 50,
-    textAlign: 'right',
-    paddingRight: 10,
-  }
 })
 
 export default HomeScreen

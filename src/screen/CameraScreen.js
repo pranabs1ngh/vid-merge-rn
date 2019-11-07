@@ -75,11 +75,11 @@ export default class CameraScreen extends Component {
             onPress={() => this.props.navigation.goBack()}
             style={styles.typeBtn}
           >
-            <Entypo name='folder-video' size={40} style={{ textAlign: 'center' }} />
+            <Entypo name='folder-video' size={30} style={{ textAlign: 'center' }} />
           </TouchableOpacity>
           {button}
           <TouchableOpacity activeOpacity={0.8} onPress={this.changeCameraType} style={styles.typeBtn}>
-            <Ionicons name='md-refresh' size={40} style={{ textAlign: 'center' }} />
+            <Ionicons name='md-refresh' size={30} style={{ textAlign: 'center' }} />
           </TouchableOpacity>
         </View>
       </View>
