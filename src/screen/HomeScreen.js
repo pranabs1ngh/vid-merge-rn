@@ -21,11 +21,20 @@ export default class HomeScreen extends Component {
 
   loadFiles = () => {
     RNFS.readDir(RNFS.DocumentDirectoryPath)
-      .then((result) => {
+      .then(result => {
+        result = result.map(item => ({ ...item, isSelected: false }))
         this.setState({ dir: result })
         return Promise.all([RNFS.stat(result[0].path), result[0].path]);
       })
       .catch(console.log);
+  }
+
+  mergeVideos = () => {
+    console.log('Merge Videos')
+  }
+
+  mergeAudio = () => {
+    console.log('Merge Audio')
   }
 
   deleteFiles = () => {
@@ -57,18 +66,19 @@ export default class HomeScreen extends Component {
                 title={item.name}
                 subtitle={String((item.size / 1024 / 1024).toFixed(2)) + ' MB'}
                 rightElement={<CheckBox
-                  checked={item.selected}
+                  checked={item.isSelected}
                   onPress={() => this.setState(({ dir, selected }) => {
-                    if (dir[index].selected) {
-                      const index = selected.findIndex(path => path === item.path)
-                      selected.splice(index, 1)
-                      dir[index] = { ...dir[index], selected: false }
+                    if (item.isSelected) {
+                      const i = selected.findIndex(path => path === item.path)
+                      selected.splice(i, 1)
+                      dir[index].isSelected = false
+                      return { dir, selected }
                     }
                     else {
                       selected.push(item.path)
-                      dir[index] = { ...dir[index], selected: true }
+                      dir[index] = { ...item, isSelected: true }
+                      return { dir, selected }
                     }
-                    return { dir, selected }
                   })}
                 />}
                 bottomDivider
@@ -76,7 +86,11 @@ export default class HomeScreen extends Component {
             </TouchableHighlight>
           })}
         </View>
-        <Footer delete={this.deleteFiles} />
+        <Footer
+          mergeVideos={this.mergeVideos}
+          mergeAudio={this.mergeAudio}
+          delete={this.deleteFiles}
+        />
       </View>
     )
   }

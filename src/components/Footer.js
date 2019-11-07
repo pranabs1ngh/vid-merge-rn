@@ -8,13 +8,15 @@ const footer = props => {
       <Button
         title="Merge Videos"
         type="outline"
+        onPress={props.mergeVideos}
       />
       <Button
         title="Merge Audio"
         type="outline"
+        onPress={props.mergeAudio}
       />
       <Button
-        title="Delete"
+        title="Delete File(s)"
         type="outline"
         onPress={props.delete}
       />
