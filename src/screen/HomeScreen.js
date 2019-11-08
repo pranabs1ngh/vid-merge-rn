@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
-import { StyleSheet, View, TouchableHighlight } from 'react-native'
+import { StyleSheet, View, TouchableHighlight, FlatList } from 'react-native'
 import RNFS from 'react-native-fs'
-import { LogLevel, RNFFmpeg } from 'react-native-ffmpeg'
+import { RNFFmpeg } from 'react-native-ffmpeg'
 import Entypo from 'react-native-vector-icons/Entypo'
 import { ListItem, CheckBox } from 'react-native-elements'
 
@@ -54,7 +54,7 @@ export default class HomeScreen extends Component {
 
         // 2. ENCODE A VIDEO FROM THOSE FRAMES
         await RNFFmpeg
-          .execute(`-i ${RNFS.DocumentDirectoryPath}/out%05d.jpeg -c:v mpeg4 -r 24 ${RNFS.DocumentDirectoryPath}/OUTPUT${today.getTime()}.mp4`)
+          .execute(`-i ${RNFS.DocumentDirectoryPath}/out%05d.jpeg ${RNFS.DocumentDirectoryPath}/OUTPUT${today.getTime()}.mp4`)
 
         // 4. DELETE ALL EXTRA FILES CREATED IN THE PROCESS
         this.deleteCacheFiles()
@@ -62,8 +62,20 @@ export default class HomeScreen extends Component {
     }
   }
 
-  mergeAudio = () => {
-    console.log('Merge Audio')
+  mergeAudio = async () => {
+    const today = new Date();
+    if (this.state.selected[0].endsWith('.mp4') && this.state.selected[1].endsWith('mp4')) {
+      try {
+        RNFFmpeg.resetStatistics();
+
+        // 1. ENCODE A VIDEO FROM 1ST SELECTED FILE AND AUDIO FROM 2ND SELECTED FILE
+        await RNFFmpeg
+          .execute(`-i ${this.state.selected[0]} -i ${this.state.selected[1]} -map 0:v:0 -map 1:a:0 -shortest ${RNFS.DocumentDirectoryPath}/OUTPUT${today.getTime()}.mp4`)
+
+        // 2. DELETE ALL EXTRA FILES CREATED IN THE PROCESS
+        this.deleteCacheFiles()
+      } catch (err) { console.log(err) }
+    }
   }
 
   deleteFiles = () => {
@@ -78,8 +90,11 @@ export default class HomeScreen extends Component {
     return (
       <View style={styles.container}>
         <Header navigation={this.props.navigation} />
-        <View style={styles.container}>
-          {this.state.dir.map((item, index) => {
+        <FlatList
+          data={this.state.dir}
+          keyExtractor={item => item.name}
+          style={styles.container}
+          renderItem={({ item, index }) => {
             if (item.name.endsWith('.mp4') || item.name.endsWith('.jpeg'))
               return <TouchableHighlight
                 key={index}
@@ -115,8 +130,8 @@ export default class HomeScreen extends Component {
                   bottomDivider
                 />
               </TouchableHighlight>
-          })}
-        </View>
+          }}
+        />
         <Footer
           mergeVideos={this.mergeVideos}
           mergeAudio={this.mergeAudio}
