@@ -1,22 +1,30 @@
 import React from 'react'
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native'
 
-import { Header } from 'react-native-elements'
 import Ionicons from 'react-native-vector-icons/Ionicons'
 
-const header = props => {
+export default props => {
   return (
-    <>
-      <Header
-        leftComponent={{ text: 'Files', style: { color: '#fff', fontSize: 25 } }}
-        rightComponent={
-          <TouchableOpacity onPress={() => props.navigation.navigate('Camera')}>
-            <Ionicons name='ios-camera' size={40} color='#fff' />
-          </TouchableOpacity>
-        }
-      />
-    </>
+    <View style={styles.container}>
+      <Text style={styles.heading}>Files</Text>
+      <TouchableOpacity onPress={() => props.navigation.navigate('Camera')}>
+        <Ionicons name='ios-camera' size={40} color='#fff' />
+      </TouchableOpacity>
+    </View>
   )
 }
 
-export default header
+const styles = StyleSheet.create({
+  container: {
+    height: '8%',
+    padding: 10,
+    flexDirection: 'row',
+    backgroundColor: '#2089dc',
+    justifyContent: 'space-between'
+  },
+  heading: {
+    marginTop: 4,
+    color: '#fff',
+    fontSize: 25
+  }
+})
