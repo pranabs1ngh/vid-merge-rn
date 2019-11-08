@@ -1,4 +1,4 @@
-rootProject.name = 'vid_merge'
+rootProject.name = 'Vid Merge'
 apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
 include ':app'
 
