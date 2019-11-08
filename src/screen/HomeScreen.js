@@ -7,13 +7,15 @@ import { ListItem, CheckBox } from 'react-native-elements'
 
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import Loader from '../components/Loader'
 
 export default class HomeScreen extends Component {
   constructor(props) {
     super(props)
     this.state = {
       dir: [],
-      selected: []
+      selected: [],
+      isProcessing: false
     }
     this.loadFiles()
     this.focusListener = this.props.navigation.addListener('didFocus', () => this.loadFiles())
@@ -23,7 +25,7 @@ export default class HomeScreen extends Component {
     RNFS.readDir(RNFS.DocumentDirectoryPath)
       .then(result => {
         result = result.map(item => ({ ...item, isSelected: false }))
-        this.setState({ dir: result, selected: [] })
+        this.setState({ dir: result, selected: [], isProcessing: false })
         return Promise.all([RNFS.stat(result[0].path), result[0].path]);
       })
       .catch(console.log)
@@ -44,6 +46,7 @@ export default class HomeScreen extends Component {
 
   mergeVideos = async () => {
     const today = new Date();
+    this.setState({ isProcessing: true })
     if (this.state.selected[0].endsWith('.mp4') && this.state.selected[1].endsWith('mp4')) {
       try {
         RNFFmpeg.resetStatistics();
@@ -64,6 +67,7 @@ export default class HomeScreen extends Component {
 
   mergeAudio = async () => {
     const today = new Date();
+    this.setState({ isProcessing: true })
     if (this.state.selected[0].endsWith('.mp4') && this.state.selected[1].endsWith('mp4')) {
       try {
         RNFFmpeg.resetStatistics();
@@ -95,41 +99,37 @@ export default class HomeScreen extends Component {
           keyExtractor={item => item.name}
           style={styles.container}
           renderItem={({ item, index }) => {
-            if (item.name.endsWith('.mp4') || item.name.endsWith('.jpeg'))
-              return <TouchableHighlight
-                key={index}
-                onPress={() => {
-                  item.name.endsWith('.mp4') &&
-                    this.props.navigation.navigate('Video', { path: item.path })
-                }}
-              >
-                <ListItem
-                  leftIcon={<Entypo
-                    name='video'
-                    size={30}
-                    style={{ textAlign: 'center' }}
-                  />}
-                  title={item.name}
-                  subtitle={String((item.size / 1024 / 1024).toFixed(2)) + ' MB'}
-                  rightElement={<CheckBox
-                    checked={item.isSelected}
-                    onPress={() => this.setState(({ dir, selected }) => {
-                      if (item.isSelected) {
-                        const i = selected.findIndex(path => path === item.path)
-                        selected.splice(i, 1)
-                        dir[index].isSelected = false
-                        return { dir, selected }
-                      }
-                      else {
-                        selected.push(item.path)
-                        dir[index] = { ...item, isSelected: true }
-                        return { dir, selected }
-                      }
-                    })}
-                  />}
-                  bottomDivider
-                />
-              </TouchableHighlight>
+            if (!item.name.endsWith('.js')) return <TouchableHighlight onPress={() => {
+              if (item.name.endsWith('.mp4'))
+                this.props.navigation.navigate('Video', { path: item.path })
+            }}>
+              <ListItem
+                leftIcon={<Entypo
+                  name='video'
+                  size={30}
+                  style={{ textAlign: 'center' }}
+                />}
+                title={item.name}
+                subtitle={String((item.size / 1024 / 1024).toFixed(2)) + ' MB'}
+                rightElement={<CheckBox
+                  checked={item.isSelected}
+                  onPress={() => this.setState(({ dir, selected }) => {
+                    if (item.isSelected) {
+                      const i = selected.findIndex(path => path === item.path)
+                      selected.splice(i, 1)
+                      dir[index].isSelected = false
+                      return { dir, selected }
+                    }
+                    else {
+                      selected.push(item.path)
+                      dir[index] = { ...item, isSelected: true }
+                      return { dir, selected }
+                    }
+                  })}
+                />}
+                bottomDivider
+              />
+            </TouchableHighlight>
           }}
         />
         <Footer
@@ -137,6 +137,7 @@ export default class HomeScreen extends Component {
           mergeAudio={this.mergeAudio}
           delete={this.deleteFiles}
         />
+        <Loader isVisible={this.state.isProcessing} />
       </View>
     )
   }
