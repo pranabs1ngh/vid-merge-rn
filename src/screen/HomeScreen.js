@@ -37,6 +37,8 @@ export default class HomeScreen extends Component {
         result.forEach(item => {
           if (item.path.endsWith('.jpeg'))
             RNFS.unlink(item.path)
+          else if (item.path.endsWith('k.mp4'))
+            RNFS.unlink(item.path)
         })
         this.loadFiles()
         return Promise.all([RNFS.stat(result[0].path), result[0].path]);
@@ -53,11 +55,16 @@ export default class HomeScreen extends Component {
 
         // 1. EXTRACT ALL FRAMES FROM 1ST VIDEO & FIRST 5 FRAMES FROM 2ND VIDEO
         await RNFFmpeg.execute(`-i ${this.state.selected[0]} ${RNFS.DocumentDirectoryPath}/out%05d.jpeg`)
-        await RNFFmpeg.execute(`-i ${this.state.selected[1]} -vframes 5 ${RNFS.DocumentDirectoryPath}/out%05d.jpeg`)
+        await RNFFmpeg.execute(`-i ${this.state.selected[1]} -vframes 5 ${RNFS.DocumentDirectoryPath}/in%05d.jpeg`)
+
 
         // 2. ENCODE A VIDEO FROM THOSE FRAMES
         await RNFFmpeg
-          .execute(`-i ${RNFS.DocumentDirectoryPath}/out%05d.jpeg ${RNFS.DocumentDirectoryPath}/OUTPUT${today.getTime()}.mp4`)
+          .execute(`-i ${RNFS.DocumentDirectoryPath}/out%05d.jpeg ${RNFS.DocumentDirectoryPath}/achunk.mp4`)
+        await RNFFmpeg
+          .execute(`-i ${RNFS.DocumentDirectoryPath}/in%05d.jpeg ${RNFS.DocumentDirectoryPath}/bchunk.mp4`)
+
+        await RNFFmpeg.execute(`-i ${RNFS.DocumentDirectoryPath}/achunk.mp4 -i ${RNFS.DocumentDirectoryPath}/bchunk.mp4 -filter_complex [0][1]concat=n=2:v=1:a=0 ${RNFS.DocumentDirectoryPath}/OUTPUT${today.getTime()}.mp4`)
 
         // 4. DELETE ALL EXTRA FILES CREATED IN THE PROCESS
         this.deleteCacheFiles()
