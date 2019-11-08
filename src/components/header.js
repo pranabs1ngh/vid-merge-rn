@@ -17,7 +17,8 @@ export default props => {
 const styles = StyleSheet.create({
   container: {
     height: '8%',
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
     flexDirection: 'row',
     backgroundColor: '#2089dc',
     justifyContent: 'space-between'
